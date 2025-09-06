@@ -40,6 +40,10 @@ def update_warehouse(session, warehouse_id, **kwargs):
     session.commit()
     return warehouse
 
+def delete_warehouse(session, warehouse_id):
+    warehouse = session.query(Warehouse).get(warehouse_id)
+    session.delete(warehouse)
+    session.commit()
 
 
 
