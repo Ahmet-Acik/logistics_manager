@@ -19,6 +19,12 @@ def update_customer(session, customer_id, **kwargs):
     session.commit()
     return customer
 
+def delete_customer(session, customer_id):
+    customer = session.query(Customer).get(customer_id)
+    session.delete(customer)
+    session.commit()
+
+
 
 
 def main():
