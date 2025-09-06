@@ -24,6 +24,12 @@ def delete_customer(session, customer_id):
     session.delete(customer)
     session.commit()
 
+def create_warehouse(session, name, location):
+    warehouse = Warehouse(name=name, location=location)
+    session.add(warehouse)
+    session.commit()
+    return warehouse
+
 
 
 
