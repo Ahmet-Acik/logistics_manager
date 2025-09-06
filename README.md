@@ -1,9 +1,14 @@
 # Logistics Manager
 
-A Python project for managing logistics and shipping operations, including shipments, warehouses, routes, tracking, and customers. Uses SQLAlchemy for ORM and MySQL as the database backend.
+A Python project for managing logistics and shipping operations, including shipments, warehouses, routes, tracking, customers, drivers, vehicles, inventory, and user authentication. Uses SQLAlchemy for ORM and MySQL as the database backend.
 
 ## Features
-- Manage customers, warehouses, shipments, routes, and tracking
+- Manage customers, warehouses, shipments, routes, tracking, drivers, vehicles, inventory, and users
+- Shipment status history tracking
+- Inventory stock alerts
+- Reporting: shipments by warehouse, route, driver, vehicle
+- Customer order history
+- Basic authentication and user roles (admin, manager, driver)
 - SQLAlchemy ORM models for all entities
 - MySQL database integration
 - Easily extensible for more business logic
@@ -25,11 +30,23 @@ A Python project for managing logistics and shipping operations, including shipm
    pip install -r requirements.txt
    ```
 4. Configure your MySQL connection in `config.py`.
-5. Run the database migration script to create tables.
+5. Run the database migration script to create tables:
+   ```sh
+   PYTHONPATH=. python -m app.create_tables
+   ```
 
 ## Usage
-- Add your business logic in the `app/` directory.
-- Use the provided models to interact with the database.
+- Use the CRUD functions in `app/crud_demo.py` to manage all entities.
+- Use reporting functions to generate shipment summaries.
+- Use authentication functions to manage users and roles.
+- See function docstrings for usage examples.
+
+## Testing
+- All features can be tested by calling the functions in `crud_demo.py`.
+- Example usage:
+  - Create and manage customers, warehouses, shipments, etc.
+  - Generate reports and alerts.
+  - Authenticate users and check roles.
 
 ## License
 MIT
