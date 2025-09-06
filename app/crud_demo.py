@@ -30,6 +30,16 @@ def create_warehouse(session, name, location):
     session.commit()
     return warehouse
 
+def get_warehouses(session):
+    return session.query(Warehouse).all()
+
+def update_warehouse(session, warehouse_id, **kwargs):
+    warehouse = session.query(Warehouse).get(warehouse_id)
+    for key, value in kwargs.items():
+        setattr(warehouse, key, value)
+    session.commit()
+    return warehouse
+
 
 
 
