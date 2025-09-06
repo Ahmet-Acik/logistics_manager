@@ -1,6 +1,6 @@
 # app/crud_demo.py
 from app.database import SessionLocal
-from app.models import Customer, Warehouse, Route, Shipment, Tracking, Inventory, ShipmentStatusHistory
+from app.models import Customer, Warehouse, Route, Shipment, Tracking, Inventory, ShipmentStatusHistory, Driver, Vehicle
 from datetime import datetime
 
 def create_customer(session, name, email, phone=None):
@@ -81,12 +81,15 @@ def delete_route(session, route_id):
     session.commit()
     return True
 
-def create_shipment(session, customer_id, warehouse_id, route_id, status='pending'):
+def create_shipment(session, customer_id, warehouse_id, route_id, status='pending', driver_id=None, vehicle_id=None, estimated_delivery=None):
     shipment = Shipment(
         customer_id=customer_id,
         warehouse_id=warehouse_id,
         route_id=route_id,
         status=status,
+        driver_id=driver_id,
+        vehicle_id=vehicle_id,
+        estimated_delivery=estimated_delivery,
         created_at=datetime.now(),
         updated_at=datetime.now()
     )
@@ -196,6 +199,70 @@ def get_shipment_status_histories(session, shipment_id=None):
     if shipment_id:
         query = query.filter_by(shipment_id=shipment_id)
     return query.all()
+
+def create_driver(session, name, phone=None, license_number=None):
+    driver = Driver(name=name, phone=phone, license_number=license_number)
+    session.add(driver)
+    session.commit()
+    return driver
+
+def get_drivers(session):
+    return session.query(Driver).all()
+
+def update_driver(session, driver_id, **kwargs):
+    driver = session.query(Driver).get(driver_id)
+    if not driver:
+        return None
+    for key, value in kwargs.items():
+        setattr(driver, key, value)
+    session.commit()
+    return driver
+
+def delete_driver(session, driver_id):
+    driver = session.query(Driver).get(driver_id)
+    if not driver:
+        return False
+    session.delete(driver)
+    session.commit()
+    return True
+
+def create_vehicle(session, plate_number, type=None, capacity=None):
+    vehicle = Vehicle(plate_number=plate_number, type=type, capacity=capacity)
+    session.add(vehicle)
+    session.commit()
+    return vehicle
+
+def get_vehicles(session):
+    return session.query(Vehicle).all()
+
+def update_vehicle(session, vehicle_id, **kwargs):
+    vehicle = session.query(Vehicle).get(vehicle_id)
+    if not vehicle:
+        return None
+    for key, value in kwargs.items():
+        setattr(vehicle, key, value)
+    session.commit()
+    return vehicle
+
+def delete_vehicle(session, vehicle_id):
+    vehicle = session.query(Vehicle).get(vehicle_id)
+    if not vehicle:
+        return False
+    session.delete(vehicle)
+    session.commit()
+    return True
+
+# Inventory stock alert function
+def get_low_stock_alerts(session, threshold=10):
+    low_stock = session.query(Inventory).filter(Inventory.quantity < threshold).all()
+    alerts = []
+    for inv in low_stock:
+        alerts.append({
+            'warehouse_id': inv.warehouse_id,
+            'item_name': inv.item_name,
+            'quantity': inv.quantity
+        })
+    return alerts
 
 def main():
     session = SessionLocal()
