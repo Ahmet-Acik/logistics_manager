@@ -66,6 +66,36 @@ def delete_route(session, route_id):
     session.delete(route)
     session.commit()
 
+def create_shipment(session, customer_id, warehouse_id, route_id, status='pending'):
+    shipment = Shipment(
+        customer_id=customer_id,
+        warehouse_id=warehouse_id,
+        route_id=route_id,
+        status=status,
+        created_at=datetime.now(),
+        updated_at=datetime.now()
+    )
+    session.add(shipment)
+    session.commit()
+    return shipment
+
+def get_shipments(session):
+    return session.query(Shipment).all()
+
+def update_shipment(session, shipment_id, **kwargs):
+    shipment = session.query(Shipment).get(shipment_id)
+    for key, value in kwargs.items():
+        setattr(shipment, key, value)
+    shipment.updated_at = datetime.now()
+    session.commit()
+    return shipment
+
+def delete_shipment(session, shipment_id):
+    shipment = session.query(Shipment).get(shipment_id)
+    session.delete(shipment)
+    session.commit()
+
+
 
 
 def main():
