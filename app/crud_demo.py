@@ -9,6 +9,10 @@ def create_customer(session, name, email, phone=None):
     session.commit()
     return customer
 
+def get_customers(session):
+    return session.query(Customer).all()
+
+
 
 def main():
     session = SessionLocal()
