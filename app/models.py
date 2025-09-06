@@ -71,3 +71,9 @@ class Tracking(Base):
     timestamp = Column(DateTime)
     shipment = relationship('Shipment', back_populates='trackings')
 
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    username = Column(String(100), unique=True, nullable=False)
+    password = Column(String(100), nullable=False)  # For demo, store plain text
+    role = Column(String(20), nullable=False)  # e.g., admin, manager, driver
