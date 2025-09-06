@@ -1,6 +1,6 @@
 # app/crud_demo.py
 from app.database import SessionLocal
-from app.models import Customer, Warehouse, Route, Shipment, Tracking
+from app.models import Customer, Warehouse, Route, Shipment, Tracking, Inventory, ShipmentStatusHistory
 from datetime import datetime
 
 def create_customer(session, name, email, phone=None):
@@ -14,6 +14,8 @@ def get_customers(session):
 
 def update_customer(session, customer_id, **kwargs):
     customer = session.query(Customer).get(customer_id)
+    if not customer:
+        return None
     for key, value in kwargs.items():
         setattr(customer, key, value)
     session.commit()
@@ -21,8 +23,11 @@ def update_customer(session, customer_id, **kwargs):
 
 def delete_customer(session, customer_id):
     customer = session.query(Customer).get(customer_id)
+    if not customer:
+        return False
     session.delete(customer)
     session.commit()
+    return True
 
 def create_warehouse(session, name, location):
     warehouse = Warehouse(name=name, location=location)
@@ -35,6 +40,8 @@ def get_warehouses(session):
 
 def update_warehouse(session, warehouse_id, **kwargs):
     warehouse = session.query(Warehouse).get(warehouse_id)
+    if not warehouse:
+        return None
     for key, value in kwargs.items():
         setattr(warehouse, key, value)
     session.commit()
@@ -42,8 +49,11 @@ def update_warehouse(session, warehouse_id, **kwargs):
 
 def delete_warehouse(session, warehouse_id):
     warehouse = session.query(Warehouse).get(warehouse_id)
+    if not warehouse:
+        return False
     session.delete(warehouse)
     session.commit()
+    return True
 
 def create_route(session, origin, destination, distance_km):
     route = Route(origin=origin, destination=destination, distance_km=distance_km)
@@ -56,6 +66,8 @@ def get_routes(session):
 
 def update_route(session, route_id, **kwargs):
     route = session.query(Route).get(route_id)
+    if not route:
+        return None
     for key, value in kwargs.items():
         setattr(route, key, value)
     session.commit()
@@ -63,8 +75,11 @@ def update_route(session, route_id, **kwargs):
 
 def delete_route(session, route_id):
     route = session.query(Route).get(route_id)
+    if not route:
+        return False
     session.delete(route)
     session.commit()
+    return True
 
 def create_shipment(session, customer_id, warehouse_id, route_id, status='pending'):
     shipment = Shipment(
@@ -84,6 +99,8 @@ def get_shipments(session):
 
 def update_shipment(session, shipment_id, **kwargs):
     shipment = session.query(Shipment).get(shipment_id)
+    if not shipment:
+        return None
     for key, value in kwargs.items():
         setattr(shipment, key, value)
     shipment.updated_at = datetime.now()
@@ -92,8 +109,11 @@ def update_shipment(session, shipment_id, **kwargs):
 
 def delete_shipment(session, shipment_id):
     shipment = session.query(Shipment).get(shipment_id)
+    if not shipment:
+        return False
     session.delete(shipment)
     session.commit()
+    return True
 
 def create_tracking(session, shipment_id, status, location):
     tracking = Tracking(
@@ -111,6 +131,8 @@ def get_trackings(session):
 
 def update_tracking(session, tracking_id, **kwargs):
     tracking = session.query(Tracking).get(tracking_id)
+    if not tracking:
+        return None
     for key, value in kwargs.items():
         setattr(tracking, key, value)
     session.commit()
@@ -118,9 +140,62 @@ def update_tracking(session, tracking_id, **kwargs):
 
 def delete_tracking(session, tracking_id):
     tracking = session.query(Tracking).get(tracking_id)
+    if not tracking:
+        return False
     session.delete(tracking)
     session.commit()
+    return True
 
+def create_inventory(session, warehouse_id, item_name, quantity):
+    from datetime import datetime
+    inventory = Inventory(
+        warehouse_id=warehouse_id,
+        item_name=item_name,
+        quantity=quantity,
+        last_updated=datetime.now()
+    )
+    session.add(inventory)
+    session.commit()
+    return inventory
+
+def get_inventories(session):
+    return session.query(Inventory).all()
+
+def update_inventory(session, inventory_id, **kwargs):
+    from datetime import datetime
+    inventory = session.query(Inventory).get(inventory_id)
+    if not inventory:
+        return None
+    for key, value in kwargs.items():
+        setattr(inventory, key, value)
+    inventory.last_updated = datetime.now()
+    session.commit()
+    return inventory
+
+def delete_inventory(session, inventory_id):
+    inventory = session.query(Inventory).get(inventory_id)
+    if not inventory:
+        return False
+    session.delete(inventory)
+    session.commit()
+    return True
+
+def create_shipment_status_history(session, shipment_id, status):
+    from datetime import datetime
+    history = ShipmentStatusHistory(
+        shipment_id=shipment_id,
+        status=status,
+        timestamp=datetime.now()
+    )
+    session.add(history)
+    session.commit()
+    return history
+
+def get_shipment_status_histories(session, shipment_id=None):
+    query = session.query(ShipmentStatusHistory)
+    if shipment_id:
+        query = query.filter_by(shipment_id=shipment_id)
+    return query.all()
 
 def main():
     session = SessionLocal()
