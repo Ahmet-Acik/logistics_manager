@@ -77,3 +77,20 @@ class User(Base):
     username = Column(String(100), unique=True, nullable=False)
     password = Column(String(100), nullable=False)  # For demo, store plain text
     role = Column(String(20), nullable=False)  # e.g., admin, manager, driver
+
+class Inventory(Base):
+    __tablename__ = 'inventories'
+    id = Column(Integer, primary_key=True)
+    warehouse_id = Column(Integer, ForeignKey('warehouses.id'))
+    item_name = Column(String(100), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    last_updated = Column(DateTime)
+    warehouse = relationship('Warehouse')
+
+class ShipmentStatusHistory(Base):
+    __tablename__ = 'shipment_status_histories'
+    id = Column(Integer, primary_key=True)
+    shipment_id = Column(Integer, ForeignKey('shipments.id'))
+    status = Column(String(50), nullable=False)
+    timestamp = Column(DateTime, nullable=False)
+    shipment = relationship('Shipment')
