@@ -95,7 +95,31 @@ def delete_shipment(session, shipment_id):
     session.delete(shipment)
     session.commit()
 
+def create_tracking(session, shipment_id, status, location):
+    tracking = Tracking(
+        shipment_id=shipment_id,
+        status=status,
+        location=location,
+        timestamp=datetime.now()
+    )
+    session.add(tracking)
+    session.commit()
+    return tracking
 
+def get_trackings(session):
+    return session.query(Tracking).all()
+
+def update_tracking(session, tracking_id, **kwargs):
+    tracking = session.query(Tracking).get(tracking_id)
+    for key, value in kwargs.items():
+        setattr(tracking, key, value)
+    session.commit()
+    return tracking
+
+def delete_tracking(session, tracking_id):
+    tracking = session.query(Tracking).get(tracking_id)
+    session.delete(tracking)
+    session.commit()
 
 
 def main():
