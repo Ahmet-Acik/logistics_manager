@@ -12,6 +12,13 @@ def create_customer(session, name, email, phone=None):
 def get_customers(session):
     return session.query(Customer).all()
 
+def update_customer(session, customer_id, **kwargs):
+    customer = session.query(Customer).get(customer_id)
+    for key, value in kwargs.items():
+        setattr(customer, key, value)
+    session.commit()
+    return customer
+
 
 
 def main():
