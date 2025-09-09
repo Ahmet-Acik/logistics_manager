@@ -130,19 +130,23 @@ def tcl_transaction_example():
     show_df(df, "Users Table After Rollback")
 
 # DCL: Grant and revoke privileges (requires admin rights)
-def dcl_grant_revoke_example():
-    # Best Practice: Use least privilege principle
-    with engine.begin() as conn:
-        # Grant SELECT on practice_db.users to a demo user
-        conn.execute(text("GRANT SELECT ON practice_db.users TO 'demo_user'@'localhost';"))
-        # Revoke SELECT
-        conn.execute(text("REVOKE SELECT ON practice_db.users FROM 'demo_user'@'localhost';"))
-    print("Granted and revoked SELECT privilege for demo_user.")
+
+# DCL (GRANT/REVOKE) operations require SUPER or GRANT OPTION privilege.
+# This section is commented out because most users do not have these privileges by default.
+# Uncomment and use only if your MySQL user has sufficient rights.
+# def dcl_grant_revoke_example():
+#     # Best Practice: Use least privilege principle
+#     with engine.begin() as conn:
+#         # Grant SELECT on practice_db.users to a demo user
+#         conn.execute(text("GRANT SELECT ON practice_db.users TO 'demo_user'@'localhost';"))
+#         # Revoke SELECT
+#         conn.execute(text("REVOKE SELECT ON practice_db.users FROM 'demo_user'@'localhost';"))
+#     print("Granted and revoked SELECT privilege for demo_user.")
 
 # Best Practice: Use EXPLAIN to analyze queries
 def explain_query():
     db_engine = create_engine('mysql+mysqldb://root:root7623@localhost:3306/practice_db')
-    query = 'EXPLAIN SELECT * FROM orders WHERE user_id = 1;'
+    query = 'EXPLAIN SELECT * FROM orders WHERE customer_id = 1;'
     df = pd.read_sql(query, db_engine)
     show_df(df, "EXPLAIN Orders Query")
     # Best Practice: Add indexes for performance (uncomment to use)
@@ -153,21 +157,21 @@ def explain_query():
 def cte_example():
     db_engine = create_engine('mysql+mysqldb://root:root7623@localhost:3306/practice_db')
     query = '''
-    WITH user_orders AS (
-        SELECT u.id, u.username, COUNT(o.id) AS order_count
-        FROM users u
-        LEFT JOIN orders o ON u.id = o.user_id
-        GROUP BY u.id, u.username
+    WITH customer_orders AS (
+        SELECT c.customer_id, c.first_name, c.last_name, COUNT(o.order_id) AS order_count
+        FROM customers c
+        LEFT JOIN orders o ON c.customer_id = o.customer_id
+        GROUP BY c.customer_id, c.first_name, c.last_name
     )
-    SELECT * FROM user_orders WHERE order_count > 0;
+    SELECT * FROM customer_orders WHERE order_count > 0;
     '''
     df = pd.read_sql(query, db_engine)
-    show_df(df, "Users with Orders (CTE Example)")
+    show_df(df, "Customers with Orders (CTE Example)")
 
 if __name__ == "__main__":
     create_database_and_tables()
     dml_operations()
     tcl_transaction_example()
-    dcl_grant_revoke_example()
+    # dcl_grant_revoke_example()  # Skipped: requires SUPER/GRANT OPTION privilege
     explain_query()
     cte_example()
