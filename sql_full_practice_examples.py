@@ -23,31 +23,76 @@ def create_database_and_tables():
     # Best Practice: Use IF NOT EXISTS for idempotency
     with engine.begin() as conn:
         conn.execute(text('CREATE DATABASE IF NOT EXISTS practice_db;'))
-        conn.execute(text('USE practice_db;'))
-        # Best Practice: Execute DDL one statement at a time for compatibility
+    # Reconnect to the new DB for table creation
+    db_engine = create_engine('mysql+mysqldb://root:root7623@localhost:3306/practice_db')
+    with db_engine.begin() as conn:
         conn.execute(text('''
             CREATE TABLE IF NOT EXISTS users (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 username VARCHAR(50) UNIQUE,
                 email VARCHAR(100),
                 is_active BOOLEAN DEFAULT 1
-            );
+            )
         '''))
+        print("Created users table.")
+        conn.execute(text('''
+            CREATE TABLE IF NOT EXISTS customers (
+                customer_id INT PRIMARY KEY AUTO_INCREMENT,
+                first_name VARCHAR(50) NOT NULL,
+                last_name VARCHAR(50) NOT NULL,
+                email VARCHAR(100) NOT NULL,
+                phone VARCHAR(20) DEFAULT NULL,
+                address TEXT,
+                city VARCHAR(50) DEFAULT NULL,
+                state VARCHAR(50) DEFAULT NULL,
+                zip_code VARCHAR(10) DEFAULT NULL,
+                country VARCHAR(50) DEFAULT 'USA',
+                created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY email (email),
+                KEY idx_customer_email (email),
+                KEY idx_customer_name (last_name, first_name)
+            )
+        '''))
+        print("Created customers table.")
         conn.execute(text('''
             CREATE TABLE IF NOT EXISTS products (
-                id INT PRIMARY KEY AUTO_INCREMENT,
-                name VARCHAR(100),
-                price DECIMAL(10,2)
-            );
+                product_id INT PRIMARY KEY AUTO_INCREMENT,
+                product_name VARCHAR(200) NOT NULL,
+                description TEXT,
+                category_id INT DEFAULT NULL,
+                price DECIMAL(10,2) NOT NULL,
+                stock_quantity INT DEFAULT 0,
+                sku VARCHAR(50) DEFAULT NULL,
+                is_active TINYINT(1) DEFAULT 1,
+                created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY sku (sku),
+                KEY idx_product_name (product_name),
+                KEY idx_category (category_id),
+                KEY idx_price (price),
+                KEY idx_product_sku (sku)
+                -- Add FK constraint if categories table exists
+            )
         '''))
+        print("Created products table.")
         conn.execute(text('''
             CREATE TABLE IF NOT EXISTS orders (
-                id INT PRIMARY KEY AUTO_INCREMENT,
-                user_id INT,
-                order_date DATE,
-                FOREIGN KEY (user_id) REFERENCES users(id)
-            );
+                order_id INT PRIMARY KEY AUTO_INCREMENT,
+                customer_id INT NOT NULL,
+                order_date TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+                status ENUM('pending','processing','shipped','delivered','cancelled') DEFAULT 'pending',
+                total_amount DECIMAL(10,2) NOT NULL,
+                shipping_address TEXT,
+                billing_address TEXT,
+                notes TEXT,
+                KEY idx_customer (customer_id),
+                KEY idx_order_date (order_date),
+                KEY idx_status (status),
+                FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
+            )
         '''))
+        print("Created orders table.")
     print("Database and tables created.")
 
 # DML: Insert, update, delete, select data
@@ -56,12 +101,14 @@ def dml_operations():
     with db_engine.begin() as conn:
         # Best Practice: Insert parent rows before child rows
         conn.execute(text("INSERT IGNORE INTO users (username, email) VALUES (:u, :e)"), {"u": "alice", "e": "alice@example.com"})
-        conn.execute(text("INSERT IGNORE INTO products (name, price) VALUES (:n, :p)"), {"n": "Laptop", "p": 1200.00})
-        conn.execute(text("INSERT IGNORE INTO orders (user_id, order_date) VALUES (1, NOW())"))
+        conn.execute(text("INSERT IGNORE INTO products (product_name, price) VALUES (:n, :p)"), {"n": "Laptop", "p": 1200.00})
+        # Insert a customer if not exists (since orders references customers)
+        conn.execute(text("INSERT IGNORE INTO customers (customer_id, first_name, last_name, email) VALUES (1, 'Test', 'Customer', 'test@example.com')"))
+        conn.execute(text("INSERT IGNORE INTO orders (customer_id, order_date, total_amount) VALUES (1, NOW(), 1200.00)"))
         # Best Practice: Use parameterized queries for updates
         conn.execute(text("UPDATE users SET is_active = 0 WHERE username = :u"), {"u": "alice"})
         # Best Practice: Use parameterized queries for deletes
-        conn.execute(text("DELETE FROM products WHERE name = :n"), {"n": "Laptop"})
+        conn.execute(text("DELETE FROM products WHERE product_name = :n"), {"n": "Laptop"})
     # Best Practice: Use SELECT with explicit columns
     df = pd.read_sql('SELECT id, username, email, is_active FROM users;', db_engine)
     show_df(df, "Users Table After DML")
