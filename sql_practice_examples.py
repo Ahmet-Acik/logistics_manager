@@ -173,15 +173,15 @@ def explicit_vs_implicit_joins():
 def batch_insert_products(products):
     """
     Insert multiple products in a single transaction.
-    products: list of dicts with keys 'product_name', 'price'
+    products: list of dicts with keys 'name', 'price'
     """
     from sqlalchemy.exc import SQLAlchemyError
     try:
         with engine.begin() as conn:
             for prod in products:
                 conn.execute(text('''
-                    INSERT INTO products (product_name, price)
-                    VALUES (:product_name, :price)
+                    INSERT INTO products (name, price)
+                    VALUES (:name, :price)
                 '''), prod)
         print(f"Inserted {len(products)} products.")
     except SQLAlchemyError as e:
@@ -245,3 +245,10 @@ if __name__ == "__main__":
     test_edge_cases()
     readable_sql_example()
     explicit_vs_implicit_joins()
+    batch_insert_products([
+        {'name': 'New Product 1', 'price': 19.99},
+        {'name': 'New Product 2', 'price': 29.99}
+    ])
+    # run_sql_file('path/to/your/script.sql')  # Uncomment and provide path
+    running_total_orders()
+    cte_example_recursive() # May not work if MySQL version < 8.0
