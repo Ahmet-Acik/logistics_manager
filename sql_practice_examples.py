@@ -204,10 +204,10 @@ def run_sql_file(filepath):
 # Example: Window function (running total)
 def running_total_orders():
     query = '''
-    SELECT o.order_id, o.customer_id, o.order_date,
-           SUM(o.total_amount) OVER (ORDER BY o.order_date) AS running_total
-    FROM orders o
-    ORDER BY o.order_date
+    SELECT order_id, customer_id, order_date,
+        SUM(total_amount) OVER (ORDER BY order_date) AS running_total
+    FROM orders
+    ORDER BY order_date
     '''
     df = pd.read_sql(query, engine)
     show_df(df, "Running Total of Orders")
