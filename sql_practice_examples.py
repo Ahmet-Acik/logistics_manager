@@ -169,6 +169,71 @@ def explicit_vs_implicit_joins():
     df_implicit = pd.read_sql(query_implicit, engine)
     show_df(df_implicit, "Implicit JOIN")
 
+# Example: Batch insert with error handling
+def batch_insert_products(products):
+    """
+    Insert multiple products in a single transaction.
+    products: list of dicts with keys 'product_name', 'price'
+    """
+    from sqlalchemy.exc import SQLAlchemyError
+    try:
+        with engine.begin() as conn:
+            for prod in products:
+                conn.execute(text('''
+                    INSERT INTO products (product_name, price)
+                    VALUES (:product_name, :price)
+                '''), prod)
+        print(f"Inserted {len(products)} products.")
+    except SQLAlchemyError as e:
+        print("Batch insert failed:", e)
+
+# Example: Run a SQL file
+def run_sql_file(filepath):
+    """
+    Execute all SQL statements in a .sql file.
+    """
+    with open(filepath, 'r') as file:
+        sql_script = file.read()
+    with engine.begin() as conn:
+        for statement in sql_script.split(';'):
+            stmt = statement.strip()
+            if stmt:
+                conn.execute(text(stmt))
+    print(f"Executed SQL file: {filepath}")
+
+# Example: Window function (running total)
+def running_total_orders():
+    query = '''
+    SELECT o.order_id, o.customer_id, o.order_date,
+           SUM(o.total_amount) OVER (ORDER BY o.order_date) AS running_total
+    FROM orders o
+    ORDER BY o.order_date
+    '''
+    df = pd.read_sql(query, engine)
+    show_df(df, "Running Total of Orders")
+
+# Example: CTE for recursive queries (if supported)
+def cte_example_recursive():
+    # Example assumes a table 'categories' with id, name, parent_id
+    query = '''
+    WITH RECURSIVE category_tree AS (
+        SELECT category_id, name, parent_id, 0 AS level
+        FROM categories
+        WHERE parent_id IS NULL
+        UNION ALL
+        SELECT c.category_id, c.name, c.parent_id, ct.level + 1
+        FROM categories c
+        JOIN category_tree ct ON c.parent_id = ct.category_id
+    )
+    SELECT * FROM category_tree ORDER BY level, name;
+    '''
+    try:
+        df = pd.read_sql(query, engine)
+        show_df(df, "Category Tree (Recursive CTE)")
+    except Exception as e:
+        print("Recursive CTE not supported or error:", e)
+
+
 if __name__ == "__main__":
     total_sales_by_product()
     top_customers_by_revenue()
