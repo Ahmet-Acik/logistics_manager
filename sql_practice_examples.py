@@ -205,12 +205,12 @@ def run_sql_file(filepath):
 def running_total_orders():
     # Use explicit table names for compatibility
     query = '''
-    SELECT orders.order_id, orders.customer_id, orders.order_date,
-           (SELECT SUM(o2.total_amount)
-            FROM orders o2
-            WHERE o2.order_date <= orders.order_date) AS running_total
-    FROM orders
-    ORDER BY orders.order_date
+    SELECT t1.order_id, t1.customer_id, t1.order_date,
+           (SELECT SUM(t2.total_amount)
+            FROM orders t2
+            WHERE t2.order_date <= t1.order_date) AS running_total
+    FROM orders t1
+    ORDER BY t1.order_date
     '''
     df = pd.read_sql(query, engine)
     show_df(df, "Running Total of Orders")
