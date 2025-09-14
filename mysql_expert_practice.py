@@ -57,6 +57,8 @@ with engine.connect() as conn:
     # 2. Transactions: isolation levels
     try:
         conn.execute(text("SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"))
+        # End any implicit transaction before starting a new one
+        conn.commit()
         with conn.begin():
             conn.execute(text("INSERT INTO sales (salesperson, amount, sale_date) VALUES ('Carol', 500, '2025-09-04')"))
             raise Exception("Simulated error")
@@ -65,12 +67,15 @@ with engine.connect() as conn:
 
     # 3. Partitioning (requires MySQL 5.7+ and proper settings)
     try:
+        # Partition key must be part of every unique key (including PK)
         conn.execute(text('''
             CREATE TABLE part_sales (
-                sale_id INT AUTO_INCREMENT PRIMARY KEY,
+                sale_id INT,
+                sale_year INT,
                 amount DECIMAL(10,2),
-                sale_date DATE
-            ) PARTITION BY RANGE (YEAR(sale_date)) (
+                sale_date DATE,
+                PRIMARY KEY (sale_id, sale_year)
+            ) PARTITION BY RANGE (sale_year) (
                 PARTITION p2025 VALUES LESS THAN (2026),
                 PARTITION pmax VALUES LESS THAN MAXVALUE
             )
