@@ -228,5 +228,4 @@ with engine.connect() as conn:
 
     # 10. Import/Export (skipped: requires file access)
     # Clean up
-    conn.execute(text("DROP DATABASE expert_demo_db"))
-    print("Dropped expert_demo_db.")
+        # The database drop is now only done at the very end.
