@@ -46,12 +46,13 @@ class Vehicle(Base):
 class Shipment(Base):
     __tablename__ = 'shipments'
     id = Column(Integer, primary_key=True)
-    customer_id = Column(Integer, ForeignKey('customers.id'))
+    customer_id = Column(Integer, ForeignKey('customers.customer_id'))
     warehouse_id = Column(Integer, ForeignKey('warehouses.id'))
     route_id = Column(Integer, ForeignKey('routes.id'))
     driver_id = Column(Integer, ForeignKey('drivers.id'))
     vehicle_id = Column(Integer, ForeignKey('vehicles.id'))
     status = Column(String(50), default='pending')
+    total_amount = Column(Float)  # Added for shipment value/revenue
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
     estimated_delivery = Column(DateTime)
