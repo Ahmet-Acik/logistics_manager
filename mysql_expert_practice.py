@@ -9,73 +9,6 @@ from sqlalchemy import create_engine, text
 engine = create_engine('mysql+mysqldb://root:root7623@localhost')
 
 with engine.connect() as conn:
-    # 11. Spatial Data (requires MySQL with spatial support)
-    try:
-        conn.execute(text('''
-            CREATE TABLE locations (
-                id INT PRIMARY KEY,
-                name VARCHAR(100),
-                position POINT
-            )
-        '''))
-        conn.execute(text("""
-            INSERT INTO locations VALUES (1, 'A', ST_GeomFromText('POINT(10 20)')),
-                                         (2, 'B', ST_GeomFromText('POINT(15 25)'))
-        """))
-        result = conn.execute(text("SELECT id, name, ST_AsText(position) FROM locations"))
-        print("Spatial data (locations):")
-        for row in result:
-            print(row)
-    except Exception as e:
-        print("Spatial data may not be supported:", e)
-
-    # 12. Full-Text Search (requires MySQL with full-text support)
-    try:
-        conn.execute(text('''
-            CREATE TABLE articles (
-                id INT PRIMARY KEY,
-                title VARCHAR(200),
-                body TEXT,
-                FULLTEXT(title, body)
-            )
-        '''))
-        conn.execute(text("""
-            INSERT INTO articles VALUES
-                (1, 'MySQL Full-Text', 'This article is about MySQL full-text search.'),
-                (2, 'Python and MySQL', 'Using Python to access MySQL databases.'),
-                (3, 'Advanced SQL', 'Window functions, CTEs, and more.')
-        """))
-        result = conn.execute(text("SELECT id, title FROM articles WHERE MATCH(title, body) AGAINST('MySQL')"))
-        print("Full-text search results for 'MySQL':")
-        for row in result:
-            print(row)
-    except Exception as e:
-        print("Full-text search may not be supported:", e)
-
-    # 13. Performance Tuning: Index hints and ANALYZE
-    try:
-        result = conn.execute(text("SELECT * FROM sales USE INDEX () WHERE amount > 100"))
-        print("Query with index hint (USE INDEX()):")
-        for row in result:
-            print(row)
-        conn.execute(text("ANALYZE TABLE sales"))
-        print("Analyzed sales table for performance stats.")
-    except Exception as e:
-        print("Performance tuning features may not be supported:", e)
-
-    # 14. Replication and Advanced Security
-    # NOTE: These require server configuration and admin rights, so only commented as guidance.
-    # -- Replication: SETUP MASTER/SLAVE, CHANGE MASTER TO, START SLAVE, SHOW SLAVE STATUS
-    # -- Security: CREATE USER, GRANT/REVOKE, SSL, PASSWORD POLICIES, AUDIT PLUGINS
-    print("Replication and advanced security require server configuration and are not demoed in this script.")
-    # Drop and create database
-    conn.execute(text("DROP DATABASE IF EXISTS expert_demo_db"))
-    print("Dropped database if existed.")
-    conn.execute(text("CREATE DATABASE expert_demo_db"))
-    print("Created expert_demo_db.")
-    conn.execute(text("USE expert_demo_db"))
-    print("Using expert_demo_db.")
-
     # 1. Advanced SELECTs: window functions, subqueries
     try:
         conn.execute(text('''
@@ -225,6 +158,73 @@ with engine.connect() as conn:
         print("Created event my_event.")
     except Exception as e:
         print("Event may not be enabled or error:", e)
+
+    # 11. Spatial Data (requires MySQL with spatial support)
+    try:
+        conn.execute(text('''
+            CREATE TABLE locations (
+                id INT PRIMARY KEY,
+                name VARCHAR(100),
+                position POINT
+            )
+        '''))
+        conn.execute(text("""
+            INSERT INTO locations VALUES (1, 'A', ST_GeomFromText('POINT(10 20)')),
+                                         (2, 'B', ST_GeomFromText('POINT(15 25)'))
+        """))
+        result = conn.execute(text("SELECT id, name, ST_AsText(position) FROM locations"))
+        print("Spatial data (locations):")
+        for row in result:
+            print(row)
+    except Exception as e:
+        print("Spatial data may not be supported:", e)
+
+    # 12. Full-Text Search (requires MySQL with full-text support)
+    try:
+        conn.execute(text('''
+            CREATE TABLE articles (
+                id INT PRIMARY KEY,
+                title VARCHAR(200),
+                body TEXT,
+                FULLTEXT(title, body)
+            )
+        '''))
+        conn.execute(text("""
+            INSERT INTO articles VALUES
+                (1, 'MySQL Full-Text', 'This article is about MySQL full-text search.'),
+                (2, 'Python and MySQL', 'Using Python to access MySQL databases.'),
+                (3, 'Advanced SQL', 'Window functions, CTEs, and more.')
+        """))
+        result = conn.execute(text("SELECT id, title FROM articles WHERE MATCH(title, body) AGAINST('MySQL')"))
+        print("Full-text search results for 'MySQL':")
+        for row in result:
+            print(row)
+    except Exception as e:
+        print("Full-text search may not be supported:", e)
+
+    # 13. Performance Tuning: Index hints and ANALYZE
+    try:
+        result = conn.execute(text("SELECT * FROM sales USE INDEX () WHERE amount > 100"))
+        print("Query with index hint (USE INDEX()):")
+        for row in result:
+            print(row)
+        conn.execute(text("ANALYZE TABLE sales"))
+        print("Analyzed sales table for performance stats.")
+    except Exception as e:
+        print("Performance tuning features may not be supported:", e)
+
+    # 14. Replication and Advanced Security
+    # NOTE: These require server configuration and admin rights, so only commented as guidance.
+    # -- Replication: SETUP MASTER/SLAVE, CHANGE MASTER TO, START SLAVE, SHOW SLAVE STATUS
+    # -- Security: CREATE USER, GRANT/REVOKE, SSL, PASSWORD POLICIES, AUDIT PLUGINS
+    print("Replication and advanced security require server configuration and are not demoed in this script.")
+    # Drop and create database
+    conn.execute(text("DROP DATABASE IF EXISTS expert_demo_db"))
+    print("Dropped database if existed.")
+    conn.execute(text("CREATE DATABASE expert_demo_db"))
+    print("Created expert_demo_db.")
+    conn.execute(text("USE expert_demo_db"))
+    print("Using expert_demo_db.")
 
     # 10. Import/Export (skipped: requires file access)
     # Clean up
