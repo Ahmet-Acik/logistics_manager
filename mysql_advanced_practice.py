@@ -65,29 +65,34 @@ with engine.connect() as conn:
     print("Dropped view customer_order_summary.")
 
     # 3. Stored Procedures & Functions
-    conn.execute(text('''
-        DELIMITER //
-        CREATE PROCEDURE insert_customer(IN cname VARCHAR(100), IN cemail VARCHAR(100), IN cage INT)
-        BEGIN
-            INSERT INTO customers (name, email, age) VALUES (cname, cemail, cage);
-        END //
-        DELIMITER ;
-    '''))
-    print("Created stored procedure insert_customer.")
+    # Stored Procedure (no DELIMITER)
+    try:
+        conn.execute(text('''
+            CREATE PROCEDURE insert_customer(IN cname VARCHAR(100), IN cemail VARCHAR(100), IN cage INT)
+            BEGIN
+                INSERT INTO customers (name, email, age) VALUES (cname, cemail, cage);
+            END
+        '''))
+        print("Created stored procedure insert_customer.")
+    except Exception as e:
+        print("Stored procedure insert_customer may already exist or error:", e)
     conn.execute(text("CALL insert_customer('Eve', 'eve@example.com', 25)"))
     print("Called stored procedure insert_customer.")
-    conn.execute(text('''
-        DELIMITER //
-        CREATE FUNCTION order_count(cid INT) RETURNS INT
-        DETERMINISTIC
-        BEGIN
-            DECLARE cnt INT;
-            SELECT COUNT(*) INTO cnt FROM orders WHERE customer_id = cid;
-            RETURN cnt;
-        END //
-        DELIMITER ;
-    '''))
-    print("Created function order_count.")
+
+    # Function (no DELIMITER)
+    try:
+        conn.execute(text('''
+            CREATE FUNCTION order_count(cid INT) RETURNS INT
+            DETERMINISTIC
+            BEGIN
+                DECLARE cnt INT;
+                SELECT COUNT(*) INTO cnt FROM orders WHERE customer_id = cid;
+                RETURN cnt;
+            END
+        '''))
+        print("Created function order_count.")
+    except Exception as e:
+        print("Function order_count may already exist or error:", e)
     result = conn.execute(text("SELECT order_count(1) AS orders_for_1"))
     print("Function order_count(1):", [row for row in result])
 
@@ -101,17 +106,18 @@ with engine.connect() as conn:
         )
     '''))
     print("Created order_log table.")
-    conn.execute(text('''
-        DELIMITER //
-        CREATE TRIGGER after_order_insert
-        AFTER INSERT ON orders
-        FOR EACH ROW
-        BEGIN
-            INSERT INTO order_log (order_id, action) VALUES (NEW.order_id, 'INSERT');
-        END //
-        DELIMITER ;
-    '''))
-    print("Created trigger after_order_insert.")
+    try:
+        conn.execute(text('''
+            CREATE TRIGGER after_order_insert
+            AFTER INSERT ON orders
+            FOR EACH ROW
+            BEGIN
+                INSERT INTO order_log (order_id, action) VALUES (NEW.order_id, 'INSERT');
+            END
+        '''))
+        print("Created trigger after_order_insert.")
+    except Exception as e:
+        print("Trigger after_order_insert may already exist or error:", e)
     conn.execute(text("INSERT INTO orders (customer_id) VALUES (1)"))
     print("Inserted order to trigger after_order_insert.")
     result = conn.execute(text("SELECT * FROM order_log"))
@@ -120,13 +126,11 @@ with engine.connect() as conn:
         print(row)
 
     # 5. Transactions
-    trans = conn.begin()
     try:
-        conn.execute(text("INSERT INTO customers (name, email, age) VALUES ('FailTest', 'fail@example.com', 17)"))
-        trans.commit()
+        with conn.begin():
+            conn.execute(text("INSERT INTO customers (name, email, age) VALUES ('FailTest', 'fail@example.com', 17)"))
     except Exception as e:
         print("Transaction failed (age < 18, check constraint):", e)
-        trans.rollback()
 
     # 6. User Management & Permissions (requires admin)
     # Uncomment if you have privileges
