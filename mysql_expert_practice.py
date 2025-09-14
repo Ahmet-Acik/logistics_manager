@@ -1,0 +1,150 @@
+"""
+mysql_expert_practice.py
+A script to practice expert-level MySQL concepts: advanced SELECTs, transactions, partitioning, foreign key actions, error handling in procedures, performance, temporary tables, JSON data, event scheduler, and import/export.
+Each run starts from scratch for a clean demo.
+"""
+import sqlalchemy
+from sqlalchemy import create_engine, text
+
+engine = create_engine('mysql+mysqldb://root:root7623@localhost')
+
+with engine.connect() as conn:
+    # Drop and create database
+    conn.execute(text("DROP DATABASE IF EXISTS expert_demo_db"))
+    print("Dropped database if existed.")
+    conn.execute(text("CREATE DATABASE expert_demo_db"))
+    print("Created expert_demo_db.")
+    conn.execute(text("USE expert_demo_db"))
+    print("Using expert_demo_db.")
+
+    # 1. Advanced SELECTs: window functions, subqueries
+    conn.execute(text('''
+        CREATE TABLE sales (
+            sale_id INT AUTO_INCREMENT PRIMARY KEY,
+            salesperson VARCHAR(100),
+            amount DECIMAL(10,2),
+            sale_date DATE
+        )
+    '''))
+    conn.execute(text("""
+        INSERT INTO sales (salesperson, amount, sale_date) VALUES
+        ('Alice', 100, '2025-09-01'),
+        ('Bob', 200, '2025-09-01'),
+        ('Alice', 150, '2025-09-02'),
+        ('Bob', 300, '2025-09-02'),
+        ('Alice', 250, '2025-09-03')
+    """))
+    print("Inserted sales data.")
+    result = conn.execute(text('''
+        SELECT salesperson, amount, sale_date,
+               SUM(amount) OVER (PARTITION BY salesperson ORDER BY sale_date) AS running_total
+        FROM sales
+    '''))
+    print("Window function (running total):")
+    for row in result:
+        print(row)
+    result = conn.execute(text('''
+        SELECT s1.* FROM sales s1
+        WHERE amount > (SELECT AVG(amount) FROM sales)
+    '''))
+    print("Subquery (sales above average):")
+    for row in result:
+        print(row)
+
+    # 2. Transactions: isolation levels
+    conn.execute(text("SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED"))
+    try:
+        with conn.begin():
+            conn.execute(text("INSERT INTO sales (salesperson, amount, sale_date) VALUES ('Carol', 500, '2025-09-04')"))
+            raise Exception("Simulated error")
+    except Exception as e:
+        print("Transaction rolled back:", e)
+
+    # 3. Partitioning
+    conn.execute(text('''
+        CREATE TABLE part_sales (
+            sale_id INT AUTO_INCREMENT PRIMARY KEY,
+            amount DECIMAL(10,2),
+            sale_date DATE
+        ) PARTITION BY RANGE (YEAR(sale_date)) (
+            PARTITION p2025 VALUES LESS THAN (2026),
+            PARTITION pmax VALUES LESS THAN MAXVALUE
+        )
+    '''))
+    print("Created partitioned table part_sales.")
+
+    # 4. Foreign Key Actions
+    conn.execute(text('''
+        CREATE TABLE parent (
+            id INT PRIMARY KEY
+        )
+    '''))
+    conn.execute(text('''
+        CREATE TABLE child (
+            id INT PRIMARY KEY,
+            parent_id INT,
+            FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE CASCADE
+        )
+    '''))
+    print("Created parent/child tables with ON DELETE CASCADE.")
+
+    # 5. Error Handling in Procedures
+    try:
+        conn.execute(text('''
+            CREATE PROCEDURE safe_insert(IN val INT)
+            BEGIN
+                DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+                BEGIN
+                    SELECT 'Error occurred';
+                END;
+                INSERT INTO parent (id) VALUES (val);
+            END
+        '''))
+        print("Created procedure with error handler.")
+    except Exception as e:
+        print("Procedure with error handler may already exist or error:", e)
+
+    # 6. Performance: EXPLAIN
+    result = conn.execute(text("EXPLAIN SELECT * FROM sales WHERE amount > 100"))
+    print("EXPLAIN plan:")
+    for row in result:
+        print(row)
+
+    # 7. Temporary Tables
+    conn.execute(text("CREATE TEMPORARY TABLE temp_sales AS SELECT * FROM sales WHERE amount > 100"))
+    result = conn.execute(text("SELECT * FROM temp_sales"))
+    print("Temporary table temp_sales:")
+    for row in result:
+        print(row)
+
+    # 8. JSON Data
+    conn.execute(text('''
+        CREATE TABLE json_test (
+            id INT PRIMARY KEY,
+            data JSON
+        )
+    '''))
+    conn.execute(text('''
+        INSERT INTO json_test VALUES (1, '{"a": 1, "b": 2}')
+    '''))
+    result = conn.execute(text("SELECT data->'$.a' AS a_value FROM json_test"))
+    print("JSON column query:")
+    for row in result:
+        print(row)
+
+    # 9. Event Scheduler (if enabled)
+    try:
+        conn.execute(text('''
+            CREATE EVENT my_event
+            ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 1 MINUTE
+            DO
+                INSERT INTO sales (salesperson, amount, sale_date) VALUES ('Event', 999, CURRENT_DATE)
+        '''))
+        print("Created event my_event.")
+    except Exception as e:
+        print("Event may not be enabled or error:", e)
+
+    # 10. Import/Export (skipped: requires file access)
+    # Clean up
+    conn.execute(text("DROP DATABASE expert_demo_db"))
+    print("Dropped expert_demo_db.")
