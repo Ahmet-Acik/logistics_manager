@@ -9,6 +9,12 @@ from sqlalchemy import create_engine, text
 engine = create_engine('mysql+mysqldb://root:root7623@localhost')
 
 with engine.connect() as conn:
+    # Create and use database if not exists
+    conn.execute(text("CREATE DATABASE IF NOT EXISTS expert_demo_db"))
+    print("Created expert_demo_db if not exists.")
+    conn.execute(text("USE expert_demo_db"))
+    print("Using expert_demo_db.")
+
     # 1. Advanced SELECTs: window functions, subqueries
     try:
         conn.execute(text('''
@@ -218,14 +224,8 @@ with engine.connect() as conn:
     # -- Replication: SETUP MASTER/SLAVE, CHANGE MASTER TO, START SLAVE, SHOW SLAVE STATUS
     # -- Security: CREATE USER, GRANT/REVOKE, SSL, PASSWORD POLICIES, AUDIT PLUGINS
     print("Replication and advanced security require server configuration and are not demoed in this script.")
-    # Drop and create database
-    conn.execute(text("DROP DATABASE IF EXISTS expert_demo_db"))
-    print("Dropped database if existed.")
-    conn.execute(text("CREATE DATABASE expert_demo_db"))
-    print("Created expert_demo_db.")
-    conn.execute(text("USE expert_demo_db"))
-    print("Using expert_demo_db.")
 
     # 10. Import/Export (skipped: requires file access)
     # Clean up
-        # The database drop is now only done at the very end.
+    conn.execute(text("DROP DATABASE expert_demo_db"))
+    print("Dropped expert_demo_db.")
